@@ -84,6 +84,37 @@ DriverEntry 调用 `KeQuerySystemTime` + `RtlTimeToTimeFields`，按 **(月, 日
 - 明文 SHA256：`159fa88a4c9d6e569c01405ab32350a5b2d1f1ab413d773bb3b122a945d1b240`
 - 结构：16 位引导代码，末尾 `55 AA`
 
+
+### 引导代码反汇编
+
+```
+0x7F  设 DS=0x7C0 / FS=0xB800 / GS=0xA000 / SS=0 / SP=0x1000
+0x97  int 10h AX=0x0013        切到 VGA 模式 13h（320x200x256）
+0x9F  绘图循环
+        CX: 0..0x140(320)   DX: 0..0xC8(200)
+        AL 逐像素递增（颜色循环），call 0x6E 写显存 A000:xxxx
+0xBD  int 16h AH=0x01          检测按键（每条扫描线都查一次）
+        无按键 → 0x123（继续画下一轮）
+        按键 == 'r'(0x72) → 继续
+0xCA  int 10h AX=0x0003        切回文本模式 80x25
+0xD0  打印 "Loading sector 8 into 0x300:0x0... "
+0xD8  int 13h AH=0x02          读扇区 9（CHS，即 LBA 8）→ 0x300:0x0
+0xED  打印 "done." / "Writing data at 0x300:0x0 into sector 0... "
+0xFD  int 13h AH=0x03          把 0x300:0x0 写回扇区 1（LBA 0 = MBR）
+0x111 打印 "done." / "Finished..." / "And one more thing..."
+0x121 cli; hlt                 停机
+```
+
+### 关键结论：按 R 可以还原
+
+驱动在覆盖前把**原 MBR 备份到了扇区 8**；引导代码在检测到用户按下 **`r`** 后，
+会把扇区 8 读回并写回扇区 0 —— **等于把机器修好**。
+
+所以这不是不可逆的"炸机"，而是一个**可修复的恶作剧式 bootkit**：
+开机先看一段 320x200 的彩色动画，等不到 `r` 就一直画；按下 `r` 才恢复并打印那段文字。
+
+![启动画面](media/mist_boot_screen.jpg)
+
 ### 解密后的启动画面文本
 
 ```
