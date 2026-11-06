@@ -1,5 +1,5 @@
 --- /usr/share/virt-manager/virtManager/vmwindow.py.orig-vmshield	2025-08-26 08:59:47.000000000 +0800
-+++ /usr/share/virt-manager/virtManager/vmwindow.py	2026-11-06 10:23:54.337376945 +0800
++++ /usr/share/virt-manager/virtManager/vmwindow.py	2026-11-06 10:26:30.104206307 +0800
 @@ -129,6 +129,7 @@
          self.vm.connect("state-changed", self._vm_state_changed_cb)
          self.vm.connect("resources-sampled", self._resources_sampled_cb)
@@ -16,7 +16,7 @@
 +    def _vmshield_net(self, action):
 +        import subprocess
 +        try:
-+            r = subprocess.run(["sudo", "-n", "/usr/local/sbin/vmshield-net", action],
++            r = subprocess.run(["/usr/bin/sudo", "-n", "/usr/local/sbin/vmshield-net", action],
 +                               capture_output=True, text=True, timeout=10)
 +            return (r.stdout or "").strip()
 +        except Exception as e:  # pragma: no cover
