@@ -2,9 +2,9 @@
 
 给 libvirt 里的 `win11-malware` 虚拟机用的一套东西：
 
-- **vmshield**（nftables）：VM 只能走 80/443/53/ICMP，碰不到局域网和宿主机
-- **SNI/DNS 日志**：记录 VM 访问了哪些域名（tshark）
-- **WiFi 按钮**：virt-manager 工具栏上一个彩色图标，一键切断/恢复 VM 网络 —— 直接打在 virt-manager 源码上，属于它的一部分
+- **WiFi 按钮**（主要功能）：virt-manager 工具栏上的小彩色图标，一键切断/恢复 VM 网络 —— 直接打在 virt-manager 源码上，属于它的一部分
+- **vmshield**（可选，默认不开）：nftables 出口白名单，VM 只能走 80/443/53/ICMP，碰不到局域网和宿主机
+- **SNI/DNS 日志**（可选）：记录 VM 访问了哪些域名（tshark）
 - **桌面浮窗**（可选）：不想开 virt-manager 时用的小竖条
 
 > 本仓库**不含任何恶意样本**，只有防护/控制脚本。
@@ -62,7 +62,11 @@ mkdir -p ~/.local/share/vmshield
 cp vmshield/icons/*.png ~/.local/share/vmshield/
 cp vmshield/wifibtn.py ~/vmshield/wifibtn.py
 
-# 4) virt-manager 工具栏按钮
+# 4) 图标（按钮用的绿/红 WiFi 图标）
+cp -r icons/hicolor/* ~/.local/share/icons/hicolor/
+gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor
+
+# 5) virt-manager 工具栏按钮
 sudo cp -a /usr/share/virt-manager/virtManager/vmwindow.py /usr/share/virt-manager/virtManager/vmwindow.py.orig-vmshield
 sudo python3 virt-manager/patch_vmwindow.py
 sudo python3 -m py_compile /usr/share/virt-manager/virtManager/vmwindow.py

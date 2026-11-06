@@ -1,5 +1,5 @@
 --- /usr/share/virt-manager/virtManager/vmwindow.py.orig-vmshield	2025-08-26 08:59:47.000000000 +0800
-+++ /usr/share/virt-manager/virtManager/vmwindow.py	2026-11-06 11:59:58.689311834 +0800
++++ /usr/share/virt-manager/virtManager/vmwindow.py	2026-11-06 12:00:45.318092242 +0800
 @@ -129,6 +129,7 @@
          self.vm.connect("state-changed", self._vm_state_changed_cb)
          self.vm.connect("resources-sampled", self._resources_sampled_cb)
@@ -8,7 +8,7 @@
          self._sync_console_page_menu_state()
          self._console_refresh_scaling_from_settings()
  
-@@ -697,6 +698,64 @@
+@@ -697,6 +698,53 @@
          if self.is_visible():
              self._refresh_vm_state()
  
@@ -27,25 +27,14 @@
 +        btn = getattr(self, "_vmshield_wifi_btn", None)
 +        if btn is None:
 +            return True
-+        import os
 +        state = self._vmshield_net("status")
-+        icon_dir = os.path.expanduser("~/.local/share/vmshield")
 +        if state == "up":
-+            path = os.path.join(icon_dir, "wifi_on.png")
 +            tip = _("VM 网络：已连接（点击断开）")
 +        elif state == "down":
-+            path = os.path.join(icon_dir, "wifi_off.png")
 +            tip = _("VM 网络：已断开（点击连接）")
 +        else:
-+            path = os.path.join(icon_dir, "wifi_off.png")
 +            tip = _("VM 未运行")
-+        try:
-+            img = Gtk.Image.new_from_file(path)
-+            img.set_pixel_size(18)
-+            img.show()
-+            btn.set_icon_widget(img)
-+        except Exception as e:  # pragma: no cover
-+            log.warning("vmshield icon load failed: %s", e)
++        btn.set_icon_name("vmshield-wifi-on" if state == "up" else "vmshield-wifi-off")
 +        btn.set_tooltip_text(tip)
 +        return True
 +
