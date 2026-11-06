@@ -95,6 +95,10 @@ sudo python3 virt-manager/patch_vmwindow.py
 sudo python3 -m py_compile /usr/share/virt-manager/virtManager/vmwindow.py
 ```
 
+## 逆向笔记
+
+- [Mist bootkit 驱动分析](docs/mist-analysis.md)（@source 标注样本哈希与提取方式）
+
 ## 已知限制
 
 - 宿主机看不到进程信息，**只能按端口放行**：样本用 443 连 C2 会被放行，和"允许 Edge"是同一件事
