@@ -1,0 +1,74 @@
+--- /usr/share/virt-manager/virtManager/vmwindow.py.orig-vmshield	2025-08-26 08:59:47.000000000 +0800
++++ /usr/share/virt-manager/virtManager/vmwindow.py	2026-11-06 10:23:54.337376945 +0800
+@@ -129,6 +129,7 @@
+         self.vm.connect("state-changed", self._vm_state_changed_cb)
+         self.vm.connect("resources-sampled", self._resources_sampled_cb)
+ 
++        self._setup_vmshield_wifi_button()
+         self._sync_console_page_menu_state()
+         self._console_refresh_scaling_from_settings()
+ 
+@@ -697,6 +698,63 @@
+         if self.is_visible():
+             self._refresh_vm_state()
+ 
++    # ---- vmshield: 工具栏上的 VM 网络开关 ----
++    def _vmshield_net(self, action):
++        import subprocess
++        try:
++            r = subprocess.run(["sudo", "-n", "/usr/local/sbin/vmshield-net", action],
++                               capture_output=True, text=True, timeout=10)
++            return (r.stdout or "").strip()
++        except Exception as e:  # pragma: no cover
++            log.warning("vmshield helper failed: %s", e)
++            return ""
++
++    def _sync_vmshield_wifi_button(self, *args):
++        btn = getattr(self, "_vmshield_wifi_btn", None)
++        if btn is None:
++            return True
++        import os
++        state = self._vmshield_net("status")
++        icon_dir = os.path.expanduser("~/.local/share/vmshield")
++        if state == "up":
++            path = os.path.join(icon_dir, "wifi_on.png")
++            tip = _("VM 网络：已连接（点击断开）")
++        elif state == "down":
++            path = os.path.join(icon_dir, "wifi_off.png")
++            tip = _("VM 网络：已断开（点击连接）")
++        else:
++            path = os.path.join(icon_dir, "wifi_off.png")
++            tip = _("VM 未运行")
++        try:
++            img = Gtk.Image.new_from_file(path)
++            img.show()
++            btn.set_icon_widget(img)
++        except Exception as e:  # pragma: no cover
++            log.warning("vmshield icon load failed: %s", e)
++        btn.set_tooltip_text(tip)
++        return True
++
++    def _on_vmshield_wifi_clicked(self, src):
++        self._vmshield_net("toggle")
++        self._sync_vmshield_wifi_button()
++
++    def _setup_vmshield_wifi_button(self):
++        from gi.repository import GLib
++        try:
++            toolbar = self.widget("details-toolbar")
++            btn = Gtk.ToolButton()
++            btn.set_icon_name("network-wireless")
++            btn.set_tooltip_text(_("VM 网络开关"))
++            btn.set_is_important(True)
++            btn.connect("clicked", self._on_vmshield_wifi_clicked)
++            toolbar.insert(btn, max(0, toolbar.get_n_items() - 1))
++            btn.show()
++            self._vmshield_wifi_btn = btn
++            self._sync_vmshield_wifi_button()
++            GLib.timeout_add_seconds(3, self._sync_vmshield_wifi_button)
++        except Exception as e:  # pragma: no cover
++            log.warning("vmshield wifi button setup failed: %s", e)
++
+     def _resources_sampled_cb(self, src):
+         if self.is_visible():
+             self._refresh_resources()

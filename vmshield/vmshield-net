@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# vmshield-net: 控制沙箱虚拟机 win11-malware 的网卡链路
+# 用法: vmshield-net {status|on|off|toggle}
+set -eu
+DOM=win11-malware
+MAC=52:54:00:3c:84:c7
+V="/usr/bin/virsh -c qemu:///system"
+
+state() {
+  if ! $V domstate "$DOM" 2>/dev/null | grep -q "运行\|running"; then
+    echo "off"; return
+  fi
+  $V domif-getlink "$DOM" "$MAC" 2>/dev/null | awk '{print $2}'
+}
+setlink() { $V domif-setlink "$DOM" "$MAC" "$1" >/dev/null 2>&1 || true; }
+
+case "${1:-status}" in
+  status) state ;;
+  on)  setlink up;   state ;;
+  off) setlink down; state ;;
+  toggle)
+      if [ "$(state)" = "up" ]; then setlink down; else setlink up; fi
+      state ;;
+  *) echo "用法: $0 {status|on|off|toggle}" >&2; exit 1 ;;
+esac

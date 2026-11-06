@@ -1,0 +1,13 @@
+[Unit]
+Description=vmshield SNI/DNS logger
+After=network-online.target libvirtd.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/home/ma-xiuyuan/vmshield/sniflog.sh >> /var/log/vmshield-sni.log 2>&1'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
